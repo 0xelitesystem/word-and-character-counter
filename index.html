@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word and Character Counter</title>
+<style>
+:root {
+  --bg: #fafaf6;
+  --surface: #ffffff;
+  --ink: #0a1d1e;
+  --ink-soft: #2c4a4c;
+  --rule: #c8d4d3;
+  --teal: #0f5c60;
+  --teal-deep: #0a4548;
+  --gold: #b07d2a;
+  --gold-deep: #8a611f;
+  --ok: #1a5c2e;
+  --warn: #8a5a00;
+  --err: #8b1a1a;
+  --code-bg: #f0ebe1;
+}
+[data-theme="dark"] {
+  --bg: #0c1c1d;
+  --surface: #14292a;
+  --ink: #e8ebe6;
+  --ink-soft: #b0c0bd;
+  --rule: #2a4042;
+  --teal: #4ab4ba;
+  --teal-deep: #6dc8ce;
+  --gold: #d4a155;
+  --gold-deep: #e6b876;
+  --ok: #6dd380;
+  --warn: #d4a155;
+  --err: #e88080;
+  --code-bg: #0a1718;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: ui-serif, Georgia, "Times New Roman", serif;
+  background: var(--bg); color: var(--ink); min-height: 100vh;
+  padding: 2rem 1rem; line-height: 1.55;
+}
+.wrap { max-width: 1100px; margin: 0 auto; }
+header {
+  display: flex; justify-content: space-between; align-items: baseline;
+  border-bottom: 2px solid var(--teal); padding-bottom: 1rem; margin-bottom: 2rem;
+}
+h1 { font-size: 1.75rem; font-weight: 600; letter-spacing: -0.01em; color: var(--teal); }
+.tag {
+  font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.75rem;
+  color: var(--gold-deep); letter-spacing: 0.04em; text-transform: uppercase;
+}
+[data-theme="dark"] .tag { color: var(--gold); }
+.theme-btn {
+  background: transparent; border: 1px solid var(--rule); color: var(--ink-soft);
+  padding: 0.4rem 0.85rem; font-size: 0.8rem; font-family: inherit; cursor: pointer; border-radius: 2px;
+}
+.theme-btn:hover { border-color: var(--teal); color: var(--teal); }
+.lede { font-size: 0.95rem; color: var(--ink-soft); margin-bottom: 1.75rem; max-width: 60ch; }
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+.stat {
+  background: var(--surface); border: 1px solid var(--rule);
+  padding: 0.95rem 1rem; border-radius: 3px;
+}
+.stat-num {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 1.6rem; font-weight: 600; color: var(--teal); line-height: 1.2;
+}
+.stat-label {
+  font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--ink-soft); margin-top: 0.3rem;
+}
+.section {
+  background: var(--surface); border: 1px solid var(--rule);
+  padding: 1.25rem; margin-bottom: 1.25rem; border-radius: 3px;
+}
+label {
+  font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--ink-soft); display: block; margin-bottom: 0.5rem;
+}
+textarea {
+  width: 100%; min-height: 260px; background: var(--code-bg); border: 1px solid var(--rule);
+  color: var(--ink); padding: 0.85rem; font-family: inherit; font-size: 1rem;
+  line-height: 1.6; resize: vertical; border-radius: 2px;
+}
+textarea:focus { outline: 2px solid var(--teal); outline-offset: 1px; }
+.input-row { display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; }
+button {
+  font-family: inherit; font-size: 0.85rem; padding: 0.6rem 1.1rem;
+  border: 1px solid var(--rule); background: var(--surface); color: var(--ink);
+  cursor: pointer; border-radius: 2px;
+}
+button:hover { border-color: var(--teal); }
+button.done { border-color: var(--ok); color: var(--ok); }
+.privacy-note { font-size: 0.78rem; color: var(--gold-deep); margin-top: 0.85rem; }
+[data-theme="dark"] .privacy-note { color: var(--gold); }
+footer {
+  margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--rule);
+  font-size: 0.78rem; color: var(--ink-soft);
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.85rem;
+}
+footer a { color: var(--teal); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+@media (max-width: 640px) {
+  body { padding: 1rem 0.75rem; }
+  h1 { font-size: 1.4rem; }
+  .stat-num { font-size: 1.3rem; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>Word and Character Counter</h1>
+    <div class="tag">Live text stats in your browser</div>
+  </div>
+  <button class="theme-btn" id="theme-toggle" type="button">Dark</button>
+</header>
+
+<p class="lede">Paste or type text and watch the counts update live: words, characters with and without spaces, sentences, paragraphs, and estimated reading time. Nothing leaves this page.</p>
+
+<div class="stats">
+  <div class="stat"><div class="stat-num" id="s-words">0</div><div class="stat-label">Words</div></div>
+  <div class="stat"><div class="stat-num" id="s-chars">0</div><div class="stat-label">Characters</div></div>
+  <div class="stat"><div class="stat-num" id="s-chars-ns">0</div><div class="stat-label">Characters (no spaces)</div></div>
+  <div class="stat"><div class="stat-num" id="s-sentences">0</div><div class="stat-label">Sentences</div></div>
+  <div class="stat"><div class="stat-num" id="s-paragraphs">0</div><div class="stat-label">Paragraphs</div></div>
+  <div class="stat"><div class="stat-num" id="s-reading">0 sec</div><div class="stat-label">Reading time</div></div>
+</div>
+
+<div class="section">
+  <label for="text-input">Text</label>
+  <textarea id="text-input" spellcheck="false" placeholder="Paste or type your text here. The counts update as you go."></textarea>
+  <div class="input-row">
+    <button id="sample-btn" type="button">Load sample</button>
+    <button id="copy-btn" type="button">Copy text</button>
+    <button id="clear-btn" type="button">Clear</button>
+  </div>
+  <div class="privacy-note">All counting happens locally. Your text is never sent to any server.</div>
+</div>
+
+<footer>
+  <div>Word and Character Counter. Open source, MIT licensed. <a href="https://github.com/0xelitesystem/word-and-character-counter" target="_blank" rel="noopener">View source</a>.</div>
+  <div>Reading time assumes 200 words per minute.</div>
+</footer>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+const themeBtn = $("theme-toggle");
+function setTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  themeBtn.textContent = t === "dark" ? "Light" : "Dark";
+}
+themeBtn.addEventListener("click", () => {
+  const cur = document.documentElement.getAttribute("data-theme") || "light";
+  setTheme(cur === "dark" ? "light" : "dark");
+});
+
+const WPM = 200;
+
+function fmtNum(n) {
+  return n.toLocaleString("en-US");
+}
+
+function readingTime(words) {
+  if (words === 0) return "0 sec";
+  const minutes = words / WPM;
+  const totalSeconds = Math.round(minutes * 60);
+  if (totalSeconds < 60) return totalSeconds + " sec";
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  if (s === 0) return m + " min";
+  return m + " min " + s + " sec";
+}
+
+function count() {
+  const text = $("text-input").value;
+
+  // Characters
+  const chars = text.length;
+  const charsNoSpaces = text.replace(/\s/g, "").length;
+
+  // Words: split on any run of whitespace, drop empties
+  const words = text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
+
+  // Sentences: count runs of sentence-ending punctuation. Treat ... or ?! as one.
+  const sentenceMatches = text.match(/[^.!?]*[.!?]+(?=\s|$)/g);
+  let sentences = sentenceMatches ? sentenceMatches.filter((s) => s.trim().length > 0).length : 0;
+  // If there is leftover non-empty text with no terminator, count it as one sentence
+  const trailing = text.replace(/[^.!?]*[.!?]+(?=\s|$)/g, "").trim();
+  if (trailing.length > 0) sentences += 1;
+
+  // Paragraphs: blocks separated by one or more blank lines, or single non-empty block
+  const paragraphs = text.trim() === ""
+    ? 0
+    : text.trim().split(/\n\s*\n+/).filter((p) => p.trim().length > 0).length;
+
+  $("s-words").textContent = fmtNum(words);
+  $("s-chars").textContent = fmtNum(chars);
+  $("s-chars-ns").textContent = fmtNum(charsNoSpaces);
+  $("s-sentences").textContent = fmtNum(sentences);
+  $("s-paragraphs").textContent = fmtNum(paragraphs);
+  $("s-reading").textContent = readingTime(words);
+}
+
+$("text-input").addEventListener("input", count);
+
+$("sample-btn").addEventListener("click", () => {
+  $("text-input").value =
+    "The quick brown fox jumps over the lazy dog. It was a bright cold day in April, and the clocks were striking thirteen.\n\n" +
+    "Writing well is hard. Editing is harder. But counting words should be easy, and it should happen right here in your browser without anyone watching.";
+  count();
+});
+
+$("clear-btn").addEventListener("click", () => {
+  $("text-input").value = "";
+  count();
+  $("text-input").focus();
+});
+
+$("copy-btn").addEventListener("click", async () => {
+  const text = $("text-input").value;
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (e) {
+    $("text-input").select();
+    try { document.execCommand("copy"); } catch (_) {}
+  }
+  const btn = $("copy-btn");
+  const orig = btn.textContent;
+  btn.textContent = "Copied";
+  btn.classList.add("done");
+  setTimeout(() => { btn.textContent = orig; btn.classList.remove("done"); }, 1100);
+});
+
+const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+setTheme(prefersDark ? "dark" : "light");
+count();
+</script>
+</body>
+</html>
